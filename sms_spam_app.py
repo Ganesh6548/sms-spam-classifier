@@ -1,8 +1,4 @@
-# app.py - DEPLOYMENT READY VERSION
-import matplotlib
-matplotlib.use('Agg')  # Set backend before importing pyplot
-import matplotlib.pyplot as plt
-import seaborn as sns
+# app.py - NO MATPLOTLIB VERSION
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -75,6 +71,19 @@ st.markdown("""
         padding: 1rem;
         border-radius: 0.5rem;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .data-card {
+        background-color: #F1F5F9;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        margin: 0.5rem 0;
+    }
+    .stat-box {
+        background-color: white;
+        padding: 1rem;
+        border-radius: 0.5rem;
+        border: 1px solid #E2E8F0;
+        text-align: center;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -226,7 +235,7 @@ def main():
         ### Features:
         
         1. **Data Overview**: View the dataset structure and statistics
-        2. **Exploratory Data Analysis**: Visualize the data distribution and patterns
+        2. **Exploratory Data Analysis**: Analyze data patterns with text-based reports
         3. **Model Training**: Train and evaluate the logistic regression model
         4. **Live Prediction**: Test the model with your own messages
         
@@ -250,10 +259,22 @@ def main():
         
         with col1:
             st.markdown("### Dataset Info")
-            st.write(f"**Total messages:** {len(df)}")
-            st.write(f"**Ham messages:** {len(df[df['label'] == 0])}")
-            st.write(f"**Spam messages:** {len(df[df['label'] == 1])}")
-            st.write(f"**Spam percentage:** {len(df[df['label'] == 1])/len(df)*100:.2f}%")
+            st.markdown('<div class="stat-box">', unsafe_allow_html=True)
+            st.metric("Total messages", len(df))
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown('<div class="stat-box">', unsafe_allow_html=True)
+            st.metric("Ham messages", len(df[df['label'] == 0]))
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            st.markdown('<div class="stat-box">', unsafe_allow_html=True)
+            st.metric("Spam messages", len(df[df['label'] == 1]))
+            st.markdown('</div>', unsafe_allow_html=True)
+            
+            spam_percentage = len(df[df['label'] == 1])/len(df)*100
+            st.markdown('<div class="stat-box">', unsafe_allow_html=True)
+            st.metric("Spam percentage", f"{spam_percentage:.2f}%")
+            st.markdown('</div>', unsafe_allow_html=True)
         
         with col2:
             st.markdown("### Sample Messages")
@@ -261,14 +282,18 @@ def main():
             tab1, tab2 = st.tabs(["Ham Samples", "Spam Samples"])
             
             with tab1:
+                st.markdown('<div class="data-card">', unsafe_allow_html=True)
                 ham_samples = df[df["label"] == 0]["message"].head(5).tolist()
                 for i, msg in enumerate(ham_samples, 1):
-                    st.write(f"{i}. {msg[:80]}..." if len(msg) > 80 else f"{i}. {msg}")
+                    st.write(f"**{i}.** {msg[:80]}..." if len(msg) > 80 else f"**{i}.** {msg}")
+                st.markdown('</div>', unsafe_allow_html=True)
             
             with tab2:
+                st.markdown('<div class="data-card">', unsafe_allow_html=True)
                 spam_samples = df[df["label"] == 1]["message"].head(5).tolist()
                 for i, msg in enumerate(spam_samples, 1):
-                    st.write(f"{i}. {msg[:80]}..." if len(msg) > 80 else f"{i}. {msg}")
+                    st.write(f"**{i}.** {msg[:80]}..." if len(msg) > 80 else f"**{i}.** {msg}")
+                st.markdown('</div>', unsafe_allow_html=True)
         
         st.markdown("### Raw Data Preview")
         st.dataframe(df.head(10))
@@ -279,7 +304,7 @@ def main():
             st.write(df.dtypes)
             st.write(f"**Missing Values:** {df.isnull().sum().sum()}")
     
-    # EDA Page
+    # EDA Page (Text-based without plots)
     elif app_mode == "EDA":
         st.markdown('<h2 class="sub-header">📈 Exploratory Data Analysis</h2>', unsafe_allow_html=True)
         
@@ -289,71 +314,107 @@ def main():
         df_eda["word_count"] = df_eda["message"].apply(lambda x: len(str(x).split()))
         df_eda["label_name"] = df_eda["label"].map({0: "Ham", 1: "Spam"})
         
-        # Distribution plots
+        # Statistics using text and metrics
         col1, col2 = st.columns(2)
         
         with col1:
-            st.markdown("#### Message Length Distribution")
-            fig, ax = plt.subplots(figsize=(8, 5))
+            st.markdown("#### Message Length Statistics")
+            ham_lengths = df_eda[df_eda["label"] == 0]["message_length"]
+            spam_lengths = df_eda[df_eda["label"] == 1]["message_length"]
             
-            for label in [0, 1]:
-                subset = df_eda[df_eda["label"] == label]
-                label_name = "Ham" if label == 0 else "Spam"
-                ax.hist(subset["message_length"], alpha=0.5, label=label_name, bins=20)
+            st.markdown('<div class="data-card">', unsafe_allow_html=True)
+            st.write("**Ham Messages:**")
+            st.write(f"- Average length: {ham_lengths.mean():.1f} characters")
+            st.write(f"- Minimum length: {ham_lengths.min()} characters")
+            st.write(f"- Maximum length: {ham_lengths.max()} characters")
+            st.write(f"- Standard deviation: {ham_lengths.std():.1f} characters")
+            st.markdown('</div>', unsafe_allow_html=True)
             
-            ax.set_xlabel("Message Length (characters)")
-            ax.set_ylabel("Frequency")
-            ax.set_title("Distribution of Message Lengths")
-            ax.legend()
-            ax.grid(True, alpha=0.3)
-            
-            st.pyplot(fig)
+            st.markdown('<div class="data-card">', unsafe_allow_html=True)
+            st.write("**Spam Messages:**")
+            st.write(f"- Average length: {spam_lengths.mean():.1f} characters")
+            st.write(f"- Minimum length: {spam_lengths.min()} characters")
+            st.write(f"- Maximum length: {spam_lengths.max()} characters")
+            st.write(f"- Standard deviation: {spam_lengths.std():.1f} characters")
+            st.markdown('</div>', unsafe_allow_html=True)
         
         with col2:
-            st.markdown("#### Word Count Distribution")
-            fig, ax = plt.subplots(figsize=(8, 5))
+            st.markdown("#### Word Count Statistics")
+            ham_words = df_eda[df_eda["label"] == 0]["word_count"]
+            spam_words = df_eda[df_eda["label"] == 1]["word_count"]
             
-            for label in [0, 1]:
-                subset = df_eda[df_eda["label"] == label]
-                label_name = "Ham" if label == 0 else "Spam"
-                ax.hist(subset["word_count"], alpha=0.5, label=label_name, bins=20)
+            st.markdown('<div class="data-card">', unsafe_allow_html=True)
+            st.write("**Ham Messages:**")
+            st.write(f"- Average words: {ham_words.mean():.1f}")
+            st.write(f"- Minimum words: {ham_words.min()}")
+            st.write(f"- Maximum words: {ham_words.max()}")
+            st.write(f"- Standard deviation: {ham_words.std():.1f}")
+            st.markdown('</div>', unsafe_allow_html=True)
             
-            ax.set_xlabel("Word Count")
-            ax.set_ylabel("Frequency")
-            ax.set_title("Distribution of Word Counts")
-            ax.legend()
-            ax.grid(True, alpha=0.3)
-            
-            st.pyplot(fig)
+            st.markdown('<div class="data-card">', unsafe_allow_html=True)
+            st.write("**Spam Messages:**")
+            st.write(f"- Average words: {spam_words.mean():.1f}")
+            st.write(f"- Minimum words: {spam_words.min()}")
+            st.write(f"- Maximum words: {spam_words.max()}")
+            st.write(f"- Standard deviation: {spam_words.std():.1f}")
+            st.markdown('</div>', unsafe_allow_html=True)
         
-        # Class distribution
+        # Class distribution using text
         st.markdown("#### Class Distribution")
-        fig, ax = plt.subplots(figsize=(8, 6))
-        
         label_counts = df_eda["label_name"].value_counts()
-        colors = ["#10B981", "#EF4444"]
+        total = label_counts.sum()
         
-        ax.pie(
-            label_counts.values,
-            labels=label_counts.index,
-            autopct="%1.1f%%",
-            colors=colors,
-            startangle=90,
-            explode=(0.05, 0.05)
-        )
+        col3, col4 = st.columns(2)
         
-        ax.set_title("Distribution of Ham vs Spam Messages")
+        with col3:
+            st.markdown('<div class="stat-box">', unsafe_allow_html=True)
+            st.metric("Ham Messages", f"{label_counts.get('Ham', 0)}", 
+                     f"{label_counts.get('Ham', 0)/total*100:.1f}%")
+            st.markdown('</div>', unsafe_allow_html=True)
         
-        st.pyplot(fig)
+        with col4:
+            st.markdown('<div class="stat-box">', unsafe_allow_html=True)
+            st.metric("Spam Messages", f"{label_counts.get('Spam', 0)}", 
+                     f"{label_counts.get('Spam', 0)/total*100:.1f}%")
+            st.markdown('</div>', unsafe_allow_html=True)
         
         # Statistics table
-        st.markdown("#### Statistical Summary")
+        st.markdown("#### Detailed Statistical Summary")
         stats_df = df_eda.groupby("label_name").agg({
             "message_length": ["mean", "std", "min", "max"],
             "word_count": ["mean", "std", "min", "max"]
         }).round(2)
         
         st.dataframe(stats_df)
+        
+        # Top words analysis (text-based)
+        st.markdown("#### Common Words Analysis")
+        
+        # Get most common words in ham messages
+        ham_text = ' '.join(df_eda[df_eda["label"] == 0]["message"].astype(str).tolist())
+        ham_words_list = ham_text.lower().split()
+        ham_word_freq = pd.Series(ham_words_list).value_counts().head(10)
+        
+        # Get most common words in spam messages  
+        spam_text = ' '.join(df_eda[df_eda["label"] == 1]["message"].astype(str).tolist())
+        spam_words_list = spam_text.lower().split()
+        spam_word_freq = pd.Series(spam_words_list).value_counts().head(10)
+        
+        col5, col6 = st.columns(2)
+        
+        with col5:
+            st.markdown("**Top 10 words in Ham messages:**")
+            st.markdown('<div class="data-card">', unsafe_allow_html=True)
+            for word, count in ham_word_freq.items():
+                st.write(f"• {word}: {count} times")
+            st.markdown('</div>', unsafe_allow_html=True)
+        
+        with col6:
+            st.markdown("**Top 10 words in Spam messages:**")
+            st.markdown('<div class="data-card">', unsafe_allow_html=True)
+            for word, count in spam_word_freq.items():
+                st.write(f"• {word}: {count} times")
+            st.markdown('</div>', unsafe_allow_html=True)
     
     # Model Training Page
     elif app_mode == "Model Training":
@@ -430,22 +491,23 @@ def main():
             report_df = pd.DataFrame(report).transpose()
             st.dataframe(report_df.style.format("{:.4f}"))
             
-            # Confusion matrix
+            # Confusion matrix as text table
             st.markdown("#### Confusion Matrix")
-            fig, ax = plt.subplots(figsize=(6, 5))
-            sns.heatmap(
+            cm_df = pd.DataFrame(
                 conf_matrix,
-                annot=True,
-                fmt="d",
-                cmap="Blues",
-                xticklabels=["Ham", "Spam"],
-                yticklabels=["Ham", "Spam"],
-                ax=ax
+                index=['Actual Ham', 'Actual Spam'],
+                columns=['Predicted Ham', 'Predicted Spam']
             )
-            ax.set_xlabel("Predicted")
-            ax.set_ylabel("Actual")
-            ax.set_title("Confusion Matrix")
-            st.pyplot(fig)
+            st.dataframe(cm_df)
+            
+            # Display confusion matrix analysis
+            st.markdown("**Confusion Matrix Analysis:**")
+            st.markdown('<div class="data-card">', unsafe_allow_html=True)
+            st.write(f"• **True Positives (Spam correctly identified):** {conf_matrix[1][1]}")
+            st.write(f"• **True Negatives (Ham correctly identified):** {conf_matrix[0][0]}")
+            st.write(f"• **False Positives (Ham misclassified as Spam):** {conf_matrix[0][1]}")
+            st.write(f"• **False Negatives (Spam misclassified as Ham):** {conf_matrix[1][0]}")
+            st.markdown('</div>', unsafe_allow_html=True)
             
         elif "results" in st.session_state:
             st.info(f"Model already trained with {st.session_state.results['test_size']}% test split.")
